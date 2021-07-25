@@ -36,9 +36,12 @@ with header:
 with st.sidebar:
     st.markdown('# **Adjust Parameters**')
 
-    year = st.slider('Choose Year', min_value=1950, max_value=2020, value=2020, step=1)
+    year = st.slider('Choose Year', min_value=1950, max_value=2021, value=2021, step=1)
     schedule, driver_df, constructor_df = make_api_calls(year)
 
+    # Restrict schedule to races which have already taken place
+    schedule['date']= pd.to_datetime(schedule['date'])
+    schedule = schedule.loc[schedule['date'] < datetime.now()]
     season_length = len(schedule)
 
     st.markdown('## **Points Progression**')
@@ -58,10 +61,8 @@ with st.sidebar:
 
     st.markdown('## **Standings**')
 
-    schedule['date']= pd.to_datetime(schedule['date'])
-    schedule = schedule.loc[schedule['date'] < datetime.now()]
-
     race_list = schedule['raceName'].tolist()
+    race_list.reverse()
 
     race = st.selectbox('Choose Race', options=race_list)
 
@@ -132,7 +133,7 @@ with points_progression_section:
     with standings_section:
         st.markdown('## **Standings**')
         st.markdown('Choose a year and a race from the sidebar on the left to view driver and constructors standings.')
-        st.markdown('***Hint:*** *Hover over a table tand scroll to see more.*')
+        st.markdown('***Hint:*** *Hover over a table and scroll to see more.*')
 
         with driver_standings_column:
             st.markdown('### **Drivers Championship**')

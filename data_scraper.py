@@ -10,8 +10,6 @@ current_year = int(todays_date.year)
 driver_standings_url = 'http://ergast.com/api/f1/{}/{}/driverStandings.json?limit=1000'
 constructor_standings_url = 'http://ergast.com/api/f1/{}/{}/constructorStandings.json?limit=1000'
 
-# os.mkdir('data/constructorID_standings')
-
 def get_standings(competitor_list, competitor, race_count, races, year):
     all_points_df = pd.DataFrame(columns=['points', 'race', competitor])
 
@@ -30,24 +28,13 @@ def get_standings(competitor_list, competitor, race_count, races, year):
 
     all_points_df.sort_values(by=['race'], inplace=True)
     return all_points_df
-    # all_points_df.to_csv('data/' + competitor + '_standings/' + str(year) + '.csv', index=False)
-    # print(str(year) + ' ' + competitor + ' done')
-
+   
 
 @st.cache(suppress_st_warning=True)
 def standings(year, competitor_type, season_length, competitor_df):
     competitor_list = competitor_df[competitor_type + 'Id'].tolist()
     races = []
     race_count = 0
-
-    # THIS TRY BLOCK IS FOR CURRENT YEAR BECAUSE ALL RACES IN SCHEDULE HAVEN'T PASSED YET
-    # for race in range(0, season_length):
-    #     try:
-    #         standings = get_competitor_standings(competitor_type, year, race)
-    #         races[race] = standings
-    #         race_count += 1
-    #     except:
-    #         break
 
     # ASYNC
     races = asyncio.run(get_races(season_length, competitor_type, year, races))
@@ -56,7 +43,6 @@ def standings(year, competitor_type, season_length, competitor_df):
     if year == current_year:
         race_count -= 1
 
-    # WILL CAUSE INDEX ERROR FOR CURRENT SEASON (season_length)
     return get_standings(competitor_list, competitor_type + 'ID', season_length, race_dict, year)
 
 
@@ -73,7 +59,6 @@ async def get_races(season_length, competitor_type, year, races):
         tasks = get_tasks(session, season_length, competitor_type, year)
         responses = await asyncio.gather(*tasks)
         for response in responses:
-            print(type(response))
             if (competitor_type == 'driver'):
                 standings_df = make_driver_df(await response.json())
             else:
@@ -111,6 +96,6 @@ def make_constructor_df(response):
 
 def build_url(competitor_type, year, race):
     if (competitor_type == 'driver'):
-        return 'http://ergast.com/api/f1/{}/{}/driverStandings.json?limit=1000'.format(year, race)
+        return driver_standings_url.format(year, race)
     else:
-        return 'http://ergast.com/api/f1/{}/{}/constructorStandings.json?limit=1000'.format(year, race)
+        return constructor_standings_url.format(year, race)
