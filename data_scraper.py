@@ -1,13 +1,18 @@
-import ergastpy
 import pandas as pd
 from datetime import date
+import streamlit as st
+import aiohttp
+import asyncio
 
 todays_date = date.today()
 current_year = int(todays_date.year)
 
+driver_standings_url = 'http://ergast.com/api/f1/{}/{}/driverStandings.json?limit=1000'
+constructor_standings_url = 'http://ergast.com/api/f1/{}/{}/constructorStandings.json?limit=1000'
+
 # os.mkdir('data/constructorID_standings')
 
-def get_standings(competitor_list, competitor, race_count, races):
+def get_standings(competitor_list, competitor, race_count, races, year):
     all_points_df = pd.DataFrame(columns=['points', 'race', competitor])
 
     for i in range(0, len(competitor_list)):
@@ -23,40 +28,89 @@ def get_standings(competitor_list, competitor, race_count, races):
             all_points_df = all_points_df.append(new_row, ignore_index=True)
             all_points_df.loc[(all_points_df.race == 0), 'race'] = race_count
 
-        all_points_df.sort_values(by=['race'], inplace=True)
-        all_points_df.to_csv('data/' + competitor + '_standings/' + str(year) + '.csv', index=False)
+    all_points_df.sort_values(by=['race'], inplace=True)
+    return all_points_df
+    # all_points_df.to_csv('data/' + competitor + '_standings/' + str(year) + '.csv', index=False)
+    # print(str(year) + ' ' + competitor + ' done')
 
-    print(str(year) + ' ' + competitor + ' done')
 
-# Get driver standings for each race of each season
-for year in range(1991, current_year + 1):
-    season_length = len(ergastpy.get_schedule(year))
-    driver_df = ergastpy.get_drivers(year)
-    driver_list = driver_df['driverId'].tolist()
-    constructor_df = ergastpy.get_constructors(year)
-    constructor_list = constructor_df['constructorId'].tolist()
+@st.cache(suppress_st_warning=True)
+def standings(year, competitor_type, season_length, competitor_df):
+    competitor_list = competitor_df[competitor_type + 'Id'].tolist()
+    races = []
+    race_count = 0
 
-    driver_races = {}
-    constructor_races = {}
-    driver_race_count = 0
-    constructor_race_count = 0
+    # THIS TRY BLOCK IS FOR CURRENT YEAR BECAUSE ALL RACES IN SCHEDULE HAVEN'T PASSED YET
+    # for race in range(0, season_length):
+    #     try:
+    #         standings = get_competitor_standings(competitor_type, year, race)
+    #         races[race] = standings
+    #         race_count += 1
+    #     except:
+    #         break
 
-    for race in range(0, season_length):
-        try:
-            driver_standings = ergastpy.driver_standings(year, race)
-            driver_races[race] = driver_standings
-            driver_race_count += 1
-            try:
-                constructor_standings = ergastpy.constructor_standings(year, race)
-                constructor_races[race] = constructor_standings
-                constructor_race_count += 1
-            except:
-                print('no constructor standings data before 1958')
-        except:
-            break
+    # ASYNC
+    races = asyncio.run(get_races(season_length, competitor_type, year, races))
+    race_dict = dict(zip(range(len(races)), races))
+
     if year == current_year:
-        driver_race_count -= 1
-        constructor_race_count -= 1
+        race_count -= 1
 
-    # get_standings(driver_list, 'driverId', driver_race_count, driver_races)
-    get_standings(constructor_list, 'constructorID', constructor_race_count, constructor_races)
+    # WILL CAUSE INDEX ERROR FOR CURRENT SEASON (season_length)
+    return get_standings(competitor_list, competitor_type + 'ID', season_length, race_dict, year)
+
+
+def get_tasks(session, season_length, competitor_type, year):
+    tasks = []
+    for race in range(0, season_length):
+        url = build_url(competitor_type, year, race)
+        tasks.append(session.get(url, ssl=False))
+    return tasks
+
+
+async def get_races(season_length, competitor_type, year, races):
+    async with aiohttp.ClientSession() as session:
+        tasks = get_tasks(session, season_length, competitor_type, year)
+        responses = await asyncio.gather(*tasks)
+        for response in responses:
+            print(type(response))
+            if (competitor_type == 'driver'):
+                standings_df = make_driver_df(await response.json())
+            else:
+                standings_df = make_constructor_df(await response.json())
+            races.append(standings_df)
+        return races
+
+
+def make_driver_df(response):
+    driverStandings = response['MRData']['StandingsTable']['StandingsLists'][0]['DriverStandings']
+
+    for driver in driverStandings:
+        driver['driverID'] = driver['Driver']['driverId']
+        driver['driver'] = driver['Driver']['givenName'] + ' ' + driver['Driver']['familyName']
+        driver['nationality'] = driver['Driver']['nationality']
+        driver['constructorID'] = driver['Constructors'][0]['constructorId']
+        driver['constructor'] = driver['Constructors'][0]['name']
+        del driver['Driver']
+        del driver['Constructors']
+
+    return pd.DataFrame(driverStandings)
+
+
+def make_constructor_df(response):
+    constructorStandings = response['MRData']['StandingsTable']['StandingsLists'][0]['ConstructorStandings']
+
+    for constructor in constructorStandings:
+        constructor['constructorID'] = constructor['Constructor']['constructorId']
+        constructor['name'] = constructor['Constructor']['name']
+        constructor['nationality'] = constructor['Constructor']['nationality']
+        del constructor['Constructor']
+
+    return pd.DataFrame(constructorStandings)
+
+
+def build_url(competitor_type, year, race):
+    if (competitor_type == 'driver'):
+        return 'http://ergast.com/api/f1/{}/{}/driverStandings.json?limit=1000'.format(year, race)
+    else:
+        return 'http://ergast.com/api/f1/{}/{}/constructorStandings.json?limit=1000'.format(year, race)

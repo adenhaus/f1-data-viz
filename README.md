@@ -12,3 +12,4 @@ This web app is built in the Streamlit framework accesses the Ergast Formula 1 A
   - Total races, wins, poles, points, podiums, championships won etc.
 - All-time rankings of top 50 drivers and constructors.
   - Most wins, points, races, championships won etc.
+- A world map of popular F1 tracks showing how many races have taken place at each.
