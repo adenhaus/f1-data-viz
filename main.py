@@ -36,7 +36,7 @@ with header:
 with st.sidebar:
     st.markdown('# **Adjust Parameters**')
 
-    year = st.slider('Choose Year', min_value=1950, max_value=2021, value=2020, step=1)
+    year = st.slider('Choose Year', min_value=1950, max_value=2020, value=2020, step=1)
     schedule, driver_df, constructor_df = make_api_calls(year)
 
     season_length = len(schedule)
