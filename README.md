@@ -1,15 +1,22 @@
 # Formula 1 Data Visualization
 An interactive dashboard built to display and explore Formula 1 data.
 
-This web app is built in the Streamlit framework accesses the Ergast Formula 1 API through weiranyu's pyErgast module, although most of these calls are in a script that runs seperately from the main app and creates csv files so as to minimize slow API calls.
+This web app is built in the [Streamlit](https://streamlit.io) framework and accesses the [Ergast](http://ergast.com/mrd/) Formula 1 API. Some of the API calls are handled by weiranyu's pyErgast module, others are done in async via aiohttp.
+
+### How to Run the App
+After installing all dependencies run the app in your browser by typing `streamlit run main.py` in the terminal.
 
 ## Features
 - Interactive line charts that show how driver and constructor points progressed over any given season.
+- Interactive pie charts showing drivers' and constructors' share of points at the end of a season.
+- Interactive drivers and constructors championship standings tables for each race in a season.
 
 ### Coming soon
-- Driver and constructor standings for each race in any given season.
 - Historical stats snapshots for drivers and constructors.
   - Total races, wins, poles, points, podiums, championships won etc.
 - All-time rankings of top 50 drivers and constructors.
   - Most wins, points, races, championships won etc.
 - A world map of popular F1 tracks showing how many races have taken place at each.
+
+### pyErgast Issues
+I created a file for the pyErgast code and included it in my source because there are issues in the module that the developer, weiranyu, has not fixed (which are fixed in my version). I cannot import the module until said bugs are fixed.
