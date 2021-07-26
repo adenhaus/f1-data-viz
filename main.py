@@ -86,7 +86,7 @@ with points_progression_section:
         for driver in non_selected_drivers:
             selected_driver_points_df = selected_driver_points_df[selected_driver_points_df.driverID != driver]
 
-        driver_standings_fig = plotter.draw_viridis_line_chart(selected_driver_points_df, "race", "points", 'driverID', 'driverID', 'driverID', 'Points', 'Race', 'Drivers')
+        driver_standings_fig = plotter.draw_viridis_line_chart(selected_driver_points_df, "race", "points", 'driverID', 'driverID', 'driverID', 'Race', 'Points', 'Drivers')
 
         points_scoring_drivers = all_driver_points_df[all_driver_points_df.points != 0]
         points_scoring_drivers = points_scoring_drivers[points_scoring_drivers.race == season_length]
@@ -114,7 +114,7 @@ with points_progression_section:
             selected_constructor_points_df = selected_constructor_points_df[selected_constructor_points_df.constructorID != constructor]
 
         try:
-            constructor_standings_fig = plotter.draw_sunsetdark_line_chart(selected_constructor_points_df, "race", "points", 'constructorID', 'constructorID', 'constructorID', 'Points', 'Race', 'Constructors')
+            constructor_standings_fig = plotter.draw_sunsetdark_line_chart(selected_constructor_points_df, "race", "points", 'constructorID', 'constructorID', 'constructorID', 'Race', 'Points', 'Constructors')
             
             points_scoring_constructor = all_constructor_points_df[all_constructor_points_df.points != 0]
             points_scoring_constructor = points_scoring_constructor[points_scoring_constructor.race == season_length]
