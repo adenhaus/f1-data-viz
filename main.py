@@ -77,7 +77,7 @@ with points_progression_section:
         selected_driver_points_df = all_driver_points_df.copy()
 
         # Remove drivers who weren't selected
-        selected_driver_points_df = data_processor.remove_df_row(selected_driver_points_df, 'driverID', non_selected_drivers)
+        selected_driver_points_df = data_processor.remove_df_rows(selected_driver_points_df, 'driverID', non_selected_drivers)
 
         driver_standings_fig = plotter.draw_viridis_line_chart(selected_driver_points_df, "race", "points", 'driverID', 'driverID', 'driverID', 'Race', 'Points', 'Drivers')
         points_scoring_drivers = data_processor.get_points_scoring_competitors(all_driver_points_df, season_length)
@@ -101,7 +101,7 @@ with points_progression_section:
             pass
 
         # Remove constructors who didn't score any points
-        selected_constructor_points_df = data_processor.remove_df_row(selected_constructor_points_df, 'constructorID', non_selected_constructors)
+        selected_constructor_points_df = data_processor.remove_df_rows(selected_constructor_points_df, 'constructorID', non_selected_constructors)
 
         try:
             constructor_standings_fig = plotter.draw_sunsetdark_line_chart(selected_constructor_points_df, "race", "points", 'constructorID', 'constructorID', 'constructorID', 'Race', 'Points', 'Constructors')

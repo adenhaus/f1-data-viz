@@ -23,7 +23,7 @@ def get_race_round(df, column_name, race):
     round_df.reset_index(drop=True, inplace=True)
     return int(round_df.iloc[0]['round'])
 
-def remove_df_row(df, competitorID, competitors):
+def remove_df_rows(df, competitorID, competitors):
     selected_points_df = df.copy()
     for competitor in competitors:
         selected_points_df = selected_points_df[selected_points_df[competitorID] != competitor]
