@@ -1,8 +1,7 @@
 import streamlit as st
-import pandas as pd
 import ergastpy
-from datetime import datetime
 import data_scraper
+import data_processor
 import plotter
 import time
 
@@ -10,11 +9,13 @@ start = time.time()
 
 st.set_page_config(layout="wide", page_title='F1 Data Visualizer', page_icon='favicon.ico')
 
-def get_attribute(df, source_attr, target_attr, value):
-    temp_df = df.loc[df[source_attr] == value]
-    temp_df.reset_index(drop=True, inplace=True)
-    return temp_df.iloc[0][target_attr]
+def get_non_selected_competitors(df, competitorID, competitor):
+    competitor_list = data_processor.get_competitor_list(df, competitorID)
+    selected_competitors = st.multiselect('Choose ' + competitor, options=competitor_list, default=competitor_list)
+    return list(set(competitor_list) - set(selected_competitors))
 
+
+# Get season schedule, drivers and constructors
 @st.cache(suppress_st_warning=True, allow_output_mutation=True)
 def make_api_calls(year):
     schedule = ergastpy.get_schedule(year)
@@ -22,6 +23,7 @@ def make_api_calls(year):
     constructor_df = ergastpy.get_constructors(year)
     return schedule, driver_df, constructor_df
 
+# Set up sections of web page
 header = st.beta_container()
 points_progression_section = st.beta_container()
 driver_points_progression_column, constructor_points_progression_column = st.beta_columns(2)
@@ -40,35 +42,26 @@ with st.sidebar:
     schedule, driver_df, constructor_df = make_api_calls(year)
 
     # Restrict schedule to races which have already taken place
-    schedule['date']= pd.to_datetime(schedule['date'])
-    schedule = schedule.loc[schedule['date'] < datetime.now()]
+    schedule = data_processor.make_column_past_dates(schedule, 'date')
     season_length = len(schedule)
 
     st.markdown('## **Points Progression**')
 
     with st.beta_expander("Select Drivers"):
-        driver_list = driver_df['driverId'].tolist()
-        selected_drivers = st.multiselect('Choose Drivers', options=driver_list, default=driver_list)
-        non_selected_drivers = list(set(driver_list) - set(selected_drivers))
+       non_selected_drivers = get_non_selected_competitors(driver_df, 'driverId', 'Drivers')
 
     with st.beta_expander("Select Constructors"):
-        constructor_list = constructor_df['constructorId'].tolist()
-        selected_constructors = st.multiselect('Choose Constructors', options=constructor_list, default=constructor_list)
-        non_selected_constructors = list(set(constructor_list) - set(selected_constructors))
+       non_selected_constructors = get_non_selected_competitors(constructor_df, 'constructorId', 'Constructors')
 
     show_legend = st.checkbox('Show legends', help='Legends are hidden by default as they cramp the layout somewhat, but you can enable them.')
     st.markdown('---')
 
     st.markdown('## **Standings**')
 
-    race_list = schedule['raceName'].tolist()
-    race_list.reverse()
-
+    # Choose race
+    race_list = data_processor.get_race_list(schedule, 'raceName')
     race = st.selectbox('Choose Race', options=race_list)
-
-    round_df = schedule.loc[schedule['raceName'] == race]
-    round_df.reset_index(drop=True, inplace=True)
-    round = int(round_df.iloc[0]['round'])
+    round = data_processor.get_race_round(schedule, 'raceName', race)
 
 
 with points_progression_section:
@@ -79,78 +72,68 @@ with points_progression_section:
     with driver_points_progression_column:
         st.markdown('### **Drivers**')
 
+        # Get dataframe with all drivers' points for each race in the season
         all_driver_points_df = data_scraper.standings(year, 'driver', season_length, driver_df)
-        # all_driver_points_df = pd.read_csv('data/driver_standings/' + str(year) + '.csv')
         selected_driver_points_df = all_driver_points_df.copy()
 
-        for driver in non_selected_drivers:
-            selected_driver_points_df = selected_driver_points_df[selected_driver_points_df.driverID != driver]
+        # Remove drivers who weren't selected
+        selected_driver_points_df = data_processor.remove_df_row(selected_driver_points_df, 'driverID', non_selected_drivers)
 
         driver_standings_fig = plotter.draw_viridis_line_chart(selected_driver_points_df, "race", "points", 'driverID', 'driverID', 'driverID', 'Race', 'Points', 'Drivers')
-
-        points_scoring_drivers = all_driver_points_df[all_driver_points_df.points != 0]
-        points_scoring_drivers = points_scoring_drivers[points_scoring_drivers.race == season_length]
-
+        points_scoring_drivers = data_processor.get_points_scoring_competitors(all_driver_points_df, season_length)
         driver_standings_pie = plotter.draw_viridis_pie_chart(points_scoring_drivers, 'points', 'driverID')
 
         if (show_legend):
             driver_standings_fig, driver_standings_pie = plotter.turn_on_driver_legends(driver_standings_fig, driver_standings_pie)
 
         st.plotly_chart(driver_standings_fig, use_container_width=True)
-
         st.plotly_chart(driver_standings_pie, use_container_width=True)
 
     with constructor_points_progression_column:
         st.markdown('### **Constructors**')
 
+        # Try except block necessary because constructor standings data is not available before 1958
         try:
+            # Get dataframe with all drivers' points for each race in the season
             all_constructor_points_df = data_scraper.standings(year, 'constructor', season_length, constructor_df)
-            # all_constructor_points_df = pd.read_csv('data/constructorID_standings/' + str(year) + '.csv')
             selected_constructor_points_df = all_constructor_points_df.copy()
         except:
             pass
 
-        for constructor in non_selected_constructors:
-            selected_constructor_points_df = selected_constructor_points_df[selected_constructor_points_df.constructorID != constructor]
+        # Remove constructors who didn't score any points
+        selected_constructor_points_df = data_processor.remove_df_row(selected_constructor_points_df, 'constructorID', non_selected_constructors)
 
         try:
             constructor_standings_fig = plotter.draw_sunsetdark_line_chart(selected_constructor_points_df, "race", "points", 'constructorID', 'constructorID', 'constructorID', 'Race', 'Points', 'Constructors')
-            
-            points_scoring_constructor = all_constructor_points_df[all_constructor_points_df.points != 0]
-            points_scoring_constructor = points_scoring_constructor[points_scoring_constructor.race == season_length]
-
-            constructor_standings_pie = plotter.draw_sunsetdark_pie_chart(points_scoring_constructor, 'points', 'constructorID')
+            points_scoring_constructors = data_processor.get_points_scoring_competitors(all_constructor_points_df, season_length)
+            constructor_standings_pie = plotter.draw_sunsetdark_pie_chart(points_scoring_constructors, 'points', 'constructorID')
 
             if (show_legend):
                 constructor_standings_fig, constructor_standings_pie = plotter.turn_on_constructor_legends(constructor_standings_fig, constructor_standings_pie)
 
             st.plotly_chart(constructor_standings_fig, use_container_width=True)
-
             st.plotly_chart(constructor_standings_pie, use_container_width=True)
         except:
             st.write('*No constructor standings data available for seasons before 1958.*')
 
-    with standings_section:
-        st.markdown('## **Standings**')
-        st.markdown('Choose a year and a race from the sidebar on the left to view driver and constructors standings.')
-        st.markdown('***Hint:*** *Hover over a table and scroll to see more.*')
+with standings_section:
+    st.markdown('## **Standings**')
+    st.markdown('Choose a year and a race from the sidebar on the left to view driver and constructors standings.')
+    st.markdown('***Hint:*** *Hover over a table and scroll to see more.*')
 
-        with driver_standings_column:
-            st.markdown('### **Drivers Championship**')
-            driver_standings_df = all_driver_points_df.loc[all_driver_points_df['race'] == round].copy()
-            driver_standings_df.sort_values(by=['points'], inplace=True, ascending=False)
-            driver_standings_df.reset_index(drop=True, inplace=True)
-            st.dataframe(driver_standings_df)
-        
-        with constructor_standings_column:
-            st.markdown('### **Constructors Championship**')
-            try:
-                constructor_standings_df = all_constructor_points_df.loc[all_constructor_points_df['race'] == round].copy()
-                constructor_standings_df.sort_values(by=['points'], inplace=True, ascending=False)
-                constructor_standings_df.reset_index(drop=True, inplace=True)
-                st.dataframe(constructor_standings_df)
-            except NameError:
-                st.write('*No constructor standings data available for seasons before 1958.*')
+    with driver_standings_column:
+        st.markdown('### **Drivers Championship**')
+        driver_standings_df = data_processor.get_driver_standings(all_driver_points_df, round)
+        st.dataframe(driver_standings_df)
+    
+    with constructor_standings_column:
+        st.markdown('### **Constructors Championship**')
+        # Try except block necessary because constructor standings data is not available before 1958
+        try:
+            constructor_standings_df = data_processor.get_driver_standings(all_constructor_points_df, round)
+            st.dataframe(constructor_standings_df)
+        except NameError:
+            st.write('*No constructor standings data available for seasons before 1958.*')
 
 end = time.time()
 print("TOTAL TIME:")
