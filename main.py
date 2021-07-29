@@ -9,8 +9,20 @@ start = time.time()
 
 st.set_page_config(layout="wide", page_title='F1 Data Visualizer', page_icon='favicon.ico')
 
+
 def get_non_selected_competitors(df, competitorID, competitor):
-    competitor_list = data_processor.get_competitor_list(df, competitorID)
+    """Presents a Streamlit Multiselectbox to the user to determine which options to
+    include. Those excluded are returned.
+
+    Args:
+        df (pandas DataFrame): The dataframe containing the column to be turned into a list.
+        competitorID (String): ID of either drivers or constructors.
+        competitor (String): Text to be displayed after "Choose " in the Multiselectbox.
+
+    Returns:
+        [type]: Drivers or constructors excluded.
+    """
+    competitor_list = data_processor.get_column_list(df, competitorID)
     selected_competitors = st.multiselect('Choose ' + competitor, options=competitor_list, default=competitor_list)
     return list(set(competitor_list) - set(selected_competitors))
 
@@ -18,10 +30,19 @@ def get_non_selected_competitors(df, competitorID, competitor):
 # Get season schedule, drivers and constructors
 @st.cache(suppress_st_warning=True, allow_output_mutation=True)
 def make_api_calls(year):
+    """Makes initial calls to Ergast API to retrieve data that will is necessary to begin the visualizations.
+
+    Args:
+        year (int): The season to retrieve data for.
+
+    Returns:
+        pandas DataFrame: Three dataframes for season schedule, drivers and constructors.
+    """
     schedule = ergastpy.get_schedule(year)
     driver_df = ergastpy.get_drivers(year)
     constructor_df = ergastpy.get_constructors(year)
     return schedule, driver_df, constructor_df
+
 
 # Set up sections of web page
 header = st.beta_container()
@@ -48,10 +69,10 @@ with st.sidebar:
     st.markdown('## **Points Progression**')
 
     with st.beta_expander("Select Drivers"):
-       non_selected_drivers = get_non_selected_competitors(driver_df, 'driverId', 'Drivers')
+        non_selected_drivers = get_non_selected_competitors(driver_df, 'driverId', 'Drivers')
 
     with st.beta_expander("Select Constructors"):
-       non_selected_constructors = get_non_selected_competitors(constructor_df, 'constructorId', 'Constructors')
+        non_selected_constructors = get_non_selected_competitors(constructor_df, 'constructorId', 'Constructors')
 
     show_legend = st.checkbox('Show legends', help='Legends are hidden by default as they cramp the layout somewhat, but you can enable them.')
     st.markdown('---')
@@ -59,7 +80,8 @@ with st.sidebar:
     st.markdown('## **Standings**')
 
     # Choose race
-    race_list = data_processor.get_race_list(schedule, 'raceName')
+    race_list = data_processor.get_column_list(schedule, 'raceName')
+    race_list.reverse()
     race = st.selectbox('Choose Race', options=race_list)
     round = data_processor.get_race_round(schedule, 'raceName', race)
 
@@ -123,14 +145,14 @@ with standings_section:
 
     with driver_standings_column:
         st.markdown('### **Drivers Championship**')
-        driver_standings_df = data_processor.get_driver_standings(all_driver_points_df, round)
+        driver_standings_df = data_processor.get_standings(all_driver_points_df, round)
         st.dataframe(driver_standings_df)
-    
+
     with constructor_standings_column:
         st.markdown('### **Constructors Championship**')
         # Try except block necessary because constructor standings data is not available before 1958
         try:
-            constructor_standings_df = data_processor.get_driver_standings(all_constructor_points_df, round)
+            constructor_standings_df = data_processor.get_standings(all_constructor_points_df, round)
             st.dataframe(constructor_standings_df)
         except NameError:
             st.write('*No constructor standings data available for seasons before 1958.*')
