@@ -1,7 +1,5 @@
 # Formula 1 Data Visualization
-An interactive dashboard built to display and explore Formula 1 data.
-
-Access the app [here](https://share.streamlit.io/adenhaus/f1-data-viz/main/main.py).
+An interactive dashboard built to display and explore Formula 1 data. Access the app [here](https://share.streamlit.io/adenhaus/f1-data-viz/main/main.py).
 
 This web app is built in the [Streamlit](https://streamlit.io) framework and accesses the [Ergast](http://ergast.com/mrd/) Formula 1 API. Some of the API calls are handled by weiranyu's pyErgast module, others are done in async via aiohttp.
 
