@@ -15,7 +15,7 @@ def get_non_selected_competitors(df, competitorID, competitor):
     include. Those excluded are returned.
 
     Args:
-        df (pandas DataFrame): The dataframe containing the column to be turned into a list.
+        df (pandas.DataFrame): The dataframe containing the column to be turned into a list.
         competitorID (String): ID of either drivers or constructors.
         competitor (String): Text to be displayed after "Choose " in the Multiselectbox.
 
@@ -36,7 +36,7 @@ def make_api_calls(year):
         year (int): The season to retrieve data for.
 
     Returns:
-        pandas DataFrame: Three dataframes for season schedule, drivers and constructors.
+        pandas.DataFrame: Three dataframes for season schedule, drivers and constructors.
     """
     schedule = ergastpy.get_schedule(year)
     driver_df = ergastpy.get_drivers(year)
@@ -50,10 +50,12 @@ points_progression_section = st.beta_container()
 driver_points_progression_column, constructor_points_progression_column = st.beta_columns(2)
 standings_section = st.beta_container()
 driver_standings_column, constructor_standings_column = st.beta_columns(2)
+footer_section = st.beta_container()
 
 with header:
     st.title('Formula 1 Data Visualiser')
     st.markdown('Explore detailed F1 data such as how driver and constructor points progressed over a given season, current and historical standings, career snapshots and more key stats.')
+    st.markdown('*Control the input parameters of tables and visualizations below by using the tools with matching headings in the sidebar to the left.*')
     st.markdown('---')
 
 with st.sidebar:
@@ -66,6 +68,7 @@ with st.sidebar:
     schedule = data_processor.make_column_past_dates(schedule, 'date')
     season_length = len(schedule)
 
+    st.markdown('---')
     st.markdown('## **Points Progression**')
 
     with st.beta_expander("Select Drivers"):
@@ -95,7 +98,7 @@ with points_progression_section:
         st.markdown('### **Drivers**')
 
         # Get dataframe with all drivers' points for each race in the season
-        all_driver_points_df = data_scraper.standings(year, 'driver', season_length, driver_df)
+        all_driver_points_df = data_scraper.get_points(year, 'driver', season_length, driver_df)
         selected_driver_points_df = all_driver_points_df.copy()
 
         # Remove drivers who weren't selected
@@ -117,7 +120,7 @@ with points_progression_section:
         # Try except block necessary because constructor standings data is not available before 1958
         try:
             # Get dataframe with all drivers' points for each race in the season
-            all_constructor_points_df = data_scraper.standings(year, 'constructor', season_length, constructor_df)
+            all_constructor_points_df = data_scraper.get_points(year, 'constructor', season_length, constructor_df)
             selected_constructor_points_df = all_constructor_points_df.copy()
         except:
             pass
@@ -156,6 +159,10 @@ with standings_section:
             st.dataframe(constructor_standings_df)
         except NameError:
             st.write('*No constructor standings data available for seasons before 1958.*')
+
+with footer_section:
+    st.markdown('---')
+    st.markdown('An [open-source](https://github.com/adenhaus/f1-data-viz) project by **Aden Haussmann**. Contact me [here](https://www.linkedin.com/in/aden-haussmann/).')
 
 end = time.time()
 print("TOTAL TIME:")

@@ -3,50 +3,53 @@ from datetime import date
 import streamlit as st
 import aiohttp
 import asyncio
+import data_processor
 
 todays_date = date.today()
 current_year = int(todays_date.year)
 
 driver_standings_url = 'http://ergast.com/api/f1/{}/{}/driverStandings.json?limit=1000'
 constructor_standings_url = 'http://ergast.com/api/f1/{}/{}/constructorStandings.json?limit=1000'
-
-def get_standings(competitor_list, competitor, race_count, races, year):
-    all_points_df = pd.DataFrame(columns=['points', 'race', competitor])
-
-    for i in range(0, len(competitor_list)):
-        for race in range(0, race_count):
-            current_standings = races[race]
-            current_points_df = current_standings.loc[current_standings[competitor] == competitor_list[i]]
-            current_points_df.reset_index(drop=True, inplace=True)
-            try:
-                current_points = current_points_df.iloc[0]['points']
-                new_row = {'points':float(current_points), 'race':int(race), competitor:competitor_list[i]}
-            except:
-                new_row = {'points':0, 'race':int(race), competitor:competitor_list[i]}
-            all_points_df = all_points_df.append(new_row, ignore_index=True)
-            all_points_df.loc[(all_points_df.race == 0), 'race'] = race_count
-
-    all_points_df.sort_values(by=['race'], inplace=True)
-    return all_points_df
    
 
 @st.cache(suppress_st_warning=True)
-def standings(year, competitor_type, season_length, competitor_df):
+def get_points(year, competitor_type, season_length, competitor_df):
+    """Returns a pandas DataFrame of the points scored by every driver/constructor
+    at every race in a given season.
+
+    Args:
+        year (int): The season year.
+        competitor_type (String): Either "driver" or "constructor".
+        season_length (int): Number of races in a season, excluding any that haven't taken place yet.
+        competitor_df (pandas.DataFrame): A DataFrame of all drivers/constructors
+        that participated in the season.
+
+    Returns:
+        pandas.DataFrame: All of the points scored by every driver/constructor
+    at every race in a given season.
+    """
     competitor_list = competitor_df[competitor_type + 'Id'].tolist()
     races = []
-    race_count = 0
 
-    # ASYNC
+    # Async
     races = asyncio.run(get_races(season_length, competitor_type, year, races))
     race_dict = dict(zip(range(len(races)), races))
 
-    if year == current_year:
-        race_count -= 1
-
-    return get_standings(competitor_list, competitor_type + 'ID', season_length, race_dict, year)
+    return data_processor.build_points_df(competitor_list, competitor_type + 'ID', season_length, race_dict)
 
 
 def get_tasks(session, season_length, competitor_type, year):
+    """Creates a list of tasks for an async function.
+
+    Args:
+        session (aiohttp.ClientSession): The client session.
+        season_length (int): Number of races in a season, excluding any that haven't taken place yet.
+        competitor_type (String): Either "driver" or "constructor".
+        year (int): The season year.
+
+    Returns:
+        list: The tasks.
+    """
     tasks = []
     for race in range(0, season_length):
         url = build_url(competitor_type, year, race)
@@ -55,46 +58,41 @@ def get_tasks(session, season_length, competitor_type, year):
 
 
 async def get_races(season_length, competitor_type, year, races):
+    """Makes API calls asynchronously to create a list of pandas DataFrames.
+
+    Args:
+        season_length (int): Number of races in a season, excluding any that haven't taken place yet.
+        competitor_type (String): Either "driver" or "constructor".
+        year (int): The season year.
+        races (list): An empty list.
+
+    Returns:
+        list: A list of pandas DataFrames containing all points scored by each driver or
+        constructor at every race in the season.
+    """
     async with aiohttp.ClientSession() as session:
         tasks = get_tasks(session, season_length, competitor_type, year)
         responses = await asyncio.gather(*tasks)
         for response in responses:
             if (competitor_type == 'driver'):
-                standings_df = make_driver_df(await response.json())
+                standings_df = data_processor.make_driver_df(await response.json())
             else:
-                standings_df = make_constructor_df(await response.json())
+                standings_df = data_processor.make_constructor_df(await response.json())
             races.append(standings_df)
         return races
 
 
-def make_driver_df(response):
-    driverStandings = response['MRData']['StandingsTable']['StandingsLists'][0]['DriverStandings']
-
-    for driver in driverStandings:
-        driver['driverID'] = driver['Driver']['driverId']
-        driver['driver'] = driver['Driver']['givenName'] + ' ' + driver['Driver']['familyName']
-        driver['nationality'] = driver['Driver']['nationality']
-        driver['constructorID'] = driver['Constructors'][0]['constructorId']
-        driver['constructor'] = driver['Constructors'][0]['name']
-        del driver['Driver']
-        del driver['Constructors']
-
-    return pd.DataFrame(driverStandings)
-
-
-def make_constructor_df(response):
-    constructorStandings = response['MRData']['StandingsTable']['StandingsLists'][0]['ConstructorStandings']
-
-    for constructor in constructorStandings:
-        constructor['constructorID'] = constructor['Constructor']['constructorId']
-        constructor['name'] = constructor['Constructor']['name']
-        constructor['nationality'] = constructor['Constructor']['nationality']
-        del constructor['Constructor']
-
-    return pd.DataFrame(constructorStandings)
-
-
 def build_url(competitor_type, year, race):
+    """Formats the URL to later be used in an http request.
+
+    Args:
+        competitor_type (String): Either "driver" or "constructor.
+        year (int): The season.
+        race (int): The round.
+
+    Returns:
+        String: Formatted URL.
+    """
     if (competitor_type == 'driver'):
         return driver_standings_url.format(year, race)
     else:

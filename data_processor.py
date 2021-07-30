@@ -58,3 +58,62 @@ def get_standings(df, round):
     standings_df.sort_values(by=['points'], inplace=True, ascending=False)
     standings_df.reset_index(drop=True, inplace=True)
     return standings_df
+
+
+def make_constructor_df(response):
+    constructorStandings = response['MRData']['StandingsTable']['StandingsLists'][0]['ConstructorStandings']
+
+    for constructor in constructorStandings:
+        constructor['constructorID'] = constructor['Constructor']['constructorId']
+        constructor['name'] = constructor['Constructor']['name']
+        constructor['nationality'] = constructor['Constructor']['nationality']
+        del constructor['Constructor']
+
+    return pd.DataFrame(constructorStandings)
+
+
+def make_driver_df(response):
+    driverStandings = response['MRData']['StandingsTable']['StandingsLists'][0]['DriverStandings']
+
+    for driver in driverStandings:
+        driver['driverID'] = driver['Driver']['driverId']
+        driver['driver'] = driver['Driver']['givenName'] + ' ' + driver['Driver']['familyName']
+        driver['nationality'] = driver['Driver']['nationality']
+        driver['constructorID'] = driver['Constructors'][0]['constructorId']
+        driver['constructor'] = driver['Constructors'][0]['name']
+        del driver['Driver']
+        del driver['Constructors']
+
+    return pd.DataFrame(driverStandings)
+
+
+def build_points_df(competitor_list, competitor, race_count, races):
+    """Builds a dataframe of points scored by every driver/constructor at every race in a
+    given season from DataFrames for each race.
+
+    Args:
+        competitor_list (list): A list of all drivers/constructors that participated in the season.
+        competitor (String): Either "driverID" or "constructorID".
+        race_count (int): Number of races in a season, excluding any that haven't taken place yet.
+        races (list): A list of pandas DataFrames of points scored by every driver/constructor at a single race.
+
+    Returns:
+        pandas.DataFrame: Points scored by every driver/constructor at every race in the season.
+    """
+    all_points_df = pd.DataFrame(columns=['points', 'race', competitor])
+
+    for i in range(0, len(competitor_list)):
+        for race in range(0, race_count):
+            current_standings = races[race]
+            current_points_df = current_standings.loc[current_standings[competitor] == competitor_list[i]]
+            current_points_df.reset_index(drop=True, inplace=True)
+            try:
+                current_points = current_points_df.iloc[0]['points']
+                new_row = {'points':float(current_points), 'race':int(race), competitor:competitor_list[i]}
+            except:
+                new_row = {'points':0, 'race':int(race), competitor:competitor_list[i]}
+            all_points_df = all_points_df.append(new_row, ignore_index=True)
+            all_points_df.loc[(all_points_df.race == 0), 'race'] = race_count
+
+    all_points_df.sort_values(by=['race'], inplace=True)
+    return all_points_df
