@@ -107,11 +107,10 @@ with points_progression_section:
             # Get dataframe with all drivers' points for each race in the season
             all_constructor_points_df = data_scraper.get_points(year, 'constructor', season_length, constructor_df)
             selected_constructor_points_df = all_constructor_points_df.copy()
-        except:
+            # Remove constructors who didn't score any points
+            selected_constructor_points_df = data_processor.remove_df_rows(selected_constructor_points_df, 'constructorID', non_selected_constructors)
+        except IndexError:
             pass
-
-        # Remove constructors who didn't score any points
-        selected_constructor_points_df = data_processor.remove_df_rows(selected_constructor_points_df, 'constructorID', non_selected_constructors)
 
         try:
             constructor_standings_fig = plotter.draw_sunsetdark_line_chart(selected_constructor_points_df, "race", "points", 'constructorID', 'constructorID', 'constructorID', 'Race', 'Points', 'Constructors')
@@ -123,7 +122,7 @@ with points_progression_section:
 
             st.plotly_chart(constructor_standings_fig, use_container_width=True)
             st.plotly_chart(constructor_standings_pie, use_container_width=True)
-        except:
+        except NameError:
             st.write('*No constructor standings data available for seasons before 1958.*')
 
     st.markdown('---')
