@@ -11,17 +11,8 @@ st.set_page_config(layout="wide", page_title='F1 Data Visualizer', page_icon='fa
 
 
 def get_non_selected_competitors(df, competitorID, competitor):
-    """Presents a Streamlit Multiselectbox to the user to determine which options to
-    include. Those excluded are returned.
-
-    Args:
-        df (pandas.DataFrame): The dataframe containing the column to be turned into a list.
-        competitorID (String): ID of either drivers or constructors.
-        competitor (String): Text to be displayed after "Choose " in the Multiselectbox.
-
-    Returns:
-        [type]: Drivers or constructors excluded.
-    """
+    # Presents a Streamlit Multiselectbox to the user to determine which options
+    # to include. Those excluded are returned.
     competitor_list = data_processor.get_column_list(df, competitorID)
     selected_competitors = st.multiselect('Choose ' + competitor, options=competitor_list, default=competitor_list)
     return list(set(competitor_list) - set(selected_competitors))
@@ -30,14 +21,8 @@ def get_non_selected_competitors(df, competitorID, competitor):
 # Get season schedule, drivers and constructors
 @st.cache(suppress_st_warning=True, allow_output_mutation=True)
 def make_api_calls(year):
-    """Makes initial calls to Ergast API to retrieve data that will is necessary to begin the visualizations.
-
-    Args:
-        year (int): The season to retrieve data for.
-
-    Returns:
-        pandas.DataFrame: Three dataframes for season schedule, drivers and constructors.
-    """
+    # Makes initial calls to Ergast API to retrieve data that will is necessary
+    # to begin the visualizations.
     schedule = ergastpy.get_schedule(year)
     driver_df = ergastpy.get_drivers(year)
     constructor_df = ergastpy.get_constructors(year)
@@ -50,10 +35,10 @@ points_progression_section = st.beta_container()
 driver_points_progression_column, constructor_points_progression_column = st.beta_columns(2)
 standings_section = st.beta_container()
 driver_standings_column, constructor_standings_column = st.beta_columns(2)
-footer_section = st.beta_container()
 
 with header:
     st.title('Formula 1 Data Visualiser')
+    st.markdown('An [open-source](https://github.com/adenhaus/f1-data-viz) project by [**Aden Haussmann**](https://www.linkedin.com/in/aden-haussmann/).')
     st.markdown('Explore detailed F1 data such as how driver and constructor points progressed over a given season, current and historical standings, career snapshots and more key stats.')
     st.markdown('*Control the input parameters of tables and visualizations below by using the tools with matching headings in the sidebar to the left.*')
     st.markdown('---')
@@ -141,6 +126,8 @@ with points_progression_section:
         except:
             st.write('*No constructor standings data available for seasons before 1958.*')
 
+    st.markdown('---')
+
 with standings_section:
     st.markdown('## **Standings**')
     st.markdown('Choose a year and a race from the sidebar on the left to view driver and constructors standings.')
@@ -159,10 +146,6 @@ with standings_section:
             st.dataframe(constructor_standings_df)
         except NameError:
             st.write('*No constructor standings data available for seasons before 1958.*')
-
-with footer_section:
-    st.markdown('---')
-    st.markdown('An [open-source](https://github.com/adenhaus/f1-data-viz) project by **Aden Haussmann**. Contact me [here](https://www.linkedin.com/in/aden-haussmann/).')
 
 end = time.time()
 print("TOTAL TIME:")

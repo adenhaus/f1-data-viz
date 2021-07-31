@@ -1,4 +1,3 @@
-import pandas as pd
 from datetime import date
 import streamlit as st
 import aiohttp
@@ -14,20 +13,8 @@ constructor_standings_url = 'http://ergast.com/api/f1/{}/{}/constructorStandings
 
 @st.cache(suppress_st_warning=True)
 def get_points(year, competitor_type, season_length, competitor_df):
-    """Returns a pandas DataFrame of the points scored by every driver/constructor
-    at every race in a given season.
-
-    Args:
-        year (int): The season year.
-        competitor_type (String): Either "driver" or "constructor".
-        season_length (int): Number of races in a season, excluding any that haven't taken place yet.
-        competitor_df (pandas.DataFrame): A DataFrame of all drivers/constructors
-        that participated in the season.
-
-    Returns:
-        pandas.DataFrame: All of the points scored by every driver/constructor
-    at every race in a given season.
-    """
+    # Returns a pandas DataFrame of the points scored by every driver/constructor
+    # at every race in a given season.
     competitor_list = competitor_df[competitor_type + 'Id'].tolist()
     races = []
 
@@ -39,17 +26,7 @@ def get_points(year, competitor_type, season_length, competitor_df):
 
 
 def get_tasks(session, season_length, competitor_type, year):
-    """Creates a list of tasks for an async function.
-
-    Args:
-        session (aiohttp.ClientSession): The client session.
-        season_length (int): Number of races in a season, excluding any that haven't taken place yet.
-        competitor_type (String): Either "driver" or "constructor".
-        year (int): The season year.
-
-    Returns:
-        list: The tasks.
-    """
+    # Creates a list of tasks for an async function.
     tasks = []
     for race in range(0, season_length):
         url = build_url(competitor_type, year, race)
@@ -58,18 +35,7 @@ def get_tasks(session, season_length, competitor_type, year):
 
 
 async def get_races(season_length, competitor_type, year, races):
-    """Makes API calls asynchronously to create a list of pandas DataFrames.
-
-    Args:
-        season_length (int): Number of races in a season, excluding any that haven't taken place yet.
-        competitor_type (String): Either "driver" or "constructor".
-        year (int): The season year.
-        races (list): An empty list.
-
-    Returns:
-        list: A list of pandas DataFrames containing all points scored by each driver or
-        constructor at every race in the season.
-    """
+    # Makes API calls asynchronously to create a list of pandas DataFrames.
     async with aiohttp.ClientSession() as session:
         tasks = get_tasks(session, season_length, competitor_type, year)
         responses = await asyncio.gather(*tasks)
@@ -83,16 +49,7 @@ async def get_races(season_length, competitor_type, year, races):
 
 
 def build_url(competitor_type, year, race):
-    """Formats the URL to later be used in an http request.
-
-    Args:
-        competitor_type (String): Either "driver" or "constructor.
-        year (int): The season.
-        race (int): The round.
-
-    Returns:
-        String: Formatted URL.
-    """
+    # Formats the URL to later be used in an http request.
     if (competitor_type == 'driver'):
         return driver_standings_url.format(year, race)
     else:

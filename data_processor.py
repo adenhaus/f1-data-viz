@@ -3,57 +3,51 @@ import pandas as pd
 
 
 def get_attribute(df, source_attr, target_attr, value):
-    '''Returns a target attribute from a pandas dataframe
-    where a source attribute is equal to a certain value.
-    '''
+    # Returns a target attribute from a pandas dataframe
+    # where a source attribute is equal to a certain value.
     temp_df = df.loc[df[source_attr] == value]
     temp_df.reset_index(drop=True, inplace=True)
     return temp_df.iloc[0][target_attr]
 
 
 def make_column_past_dates(df, column_name):
-    '''Changes a given column in a pandas dataframe to the data datatype
-    and removes rows where date is in the future.
-    '''
+    # Changes a given column in a pandas dataframe to the data datatype
+    # and removes rows where date is in the future.
     df[column_name]= pd.to_datetime(df[column_name])
     return df.loc[df[column_name] < datetime.now()]
 
 
 def get_column_list(df, competitorID):
-    '''Turns a given column of a pandas dataframe into a list.'''
+    # Turns a given column of a pandas dataframe into a list.
     return df[competitorID].tolist()
 
 
 def get_race_round(df, column_name, race):
-    '''Takes a race name and returns the race's number in the season
-    order (eg. 1 or 2).
-    '''
+    # Takes a race name and returns the race's number in the season
+    # order (eg. 1 or 2).
     round_df = df.loc[df[column_name] == race]
     round_df.reset_index(drop=True, inplace=True)
     return int(round_df.iloc[0]['round'])
 
 
 def remove_df_rows(df, competitorID, competitors):
-    '''Removes all rows of a dataframe where a value in a certain column
-    is present in a given list of values.
-    '''
+    # Removes all rows of a dataframe where a value in a certain column
+    # is present in a given list of values.
     for competitor in competitors:
         df = df[df[competitorID] != competitor]
     return df
 
 
 def get_points_scoring_competitors(df, season_length):
-    '''Return a pandas dataframe of only drivers or constructors who
-    scored points by the end of the season.
-    '''
+    # Return a pandas dataframe of only drivers or constructors who
+    # scored points by the end of the season.
     point_scorers = df[df['points'] != 0]
     return point_scorers[point_scorers['race'] == season_length]
 
 
 def get_standings(df, round):
-    '''Return a pandas dataframe of driver or constructor standings after a
-    given race in a season.
-    '''
+    # Return a pandas dataframe of driver or constructor standings after a
+    # given race in a season.
     standings_df = df.loc[df['race'] == round].copy()
     standings_df.sort_values(by=['points'], inplace=True, ascending=False)
     standings_df.reset_index(drop=True, inplace=True)
@@ -61,6 +55,7 @@ def get_standings(df, round):
 
 
 def make_constructor_df(response):
+    # Builds a pandas DataFrame from the API resonse json.
     constructorStandings = response['MRData']['StandingsTable']['StandingsLists'][0]['ConstructorStandings']
 
     for constructor in constructorStandings:
@@ -73,6 +68,7 @@ def make_constructor_df(response):
 
 
 def make_driver_df(response):
+    # Builds a pandas DataFrame from the API resonse json.
     driverStandings = response['MRData']['StandingsTable']['StandingsLists'][0]['DriverStandings']
 
     for driver in driverStandings:
@@ -88,18 +84,8 @@ def make_driver_df(response):
 
 
 def build_points_df(competitor_list, competitor, race_count, races):
-    """Builds a dataframe of points scored by every driver/constructor at every race in a
-    given season from DataFrames for each race.
-
-    Args:
-        competitor_list (list): A list of all drivers/constructors that participated in the season.
-        competitor (String): Either "driverID" or "constructorID".
-        race_count (int): Number of races in a season, excluding any that haven't taken place yet.
-        races (list): A list of pandas DataFrames of points scored by every driver/constructor at a single race.
-
-    Returns:
-        pandas.DataFrame: Points scored by every driver/constructor at every race in the season.
-    """
+    # Builds a dataframe of points scored by every driver/constructor at every race in a
+    # given season from DataFrames for each race.
     all_points_df = pd.DataFrame(columns=['points', 'race', competitor])
 
     for i in range(0, len(competitor_list)):
