@@ -193,6 +193,13 @@ def draw_viridis_bar_chart(df, x_col, y_col, x_label, y_label, colour):
         showlegend=False
     )
 
+    fig.update_traces(marker=dict( 
+        line=dict(width=0,
+            color='black'
+            )
+        )
+    )
+
     return fig
 
 
@@ -223,6 +230,13 @@ def draw_sunsetdark_bar_chart(df, x_col, y_col, x_label, y_label, colour):
         ),
         plot_bgcolor='rgba(0,0,0,0)',
         showlegend=False
+    )
+
+    fig.update_traces(marker=dict( 
+        line=dict(width=0,
+            color='black'
+            )
+        )
     )
 
     return fig

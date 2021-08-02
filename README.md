@@ -10,6 +10,7 @@ After installing all dependencies run the app in a browser by typing `streamlit 
 - Interactive line charts that show how driver and constructor points progressed over any given season.
 - Interactive pie charts showing drivers' and constructors' share of points at the end of a season.
 - Interactive drivers and constructors championship standings tables for each race in a season.
+- Drivers and constructors ranked by their number of respective championships won.
 
 ### Coming soon
 - Historical stats snapshots for drivers and constructors.
