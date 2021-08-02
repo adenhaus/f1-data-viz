@@ -1,5 +1,6 @@
 from datetime import datetime
 import pandas as pd
+import numpy as np
 
 
 def get_attribute(df, source_attr, target_attr, value):
@@ -17,9 +18,9 @@ def make_column_past_dates(df, column_name):
     return df.loc[df[column_name] < datetime.now()]
 
 
-def get_column_list(df, competitorID):
+def get_column_list(df, column):
     # Turns a given column of a pandas dataframe into a list.
-    return df[competitorID].tolist()
+    return df[column].tolist()
 
 
 def get_race_round(df, column_name, race):
@@ -83,6 +84,33 @@ def make_driver_df(response):
     return pd.DataFrame(driverStandings)
 
 
+def make_driver_champs_df(response):
+    # Builds a pandas DataFrame from the API resonse json.
+    champs = response['MRData']
+
+    driverID = champs['SeasonTable']['driverId']
+    number_wins = champs['total']
+
+    return [driverID, number_wins]
+
+
+def make_constructor_champs_df(response):
+    # Builds a pandas DataFrame from the API resonse json.
+    champs = response['MRData']
+
+    constructorID = champs['SeasonTable']['constructorId']
+    number_wins = champs['total']
+
+    return [constructorID, number_wins]
+
+
+def make_all_champs_df(response, table, competitor):
+    # Builds a pandas DataFrame from the API resonse json.
+    champs = response['MRData'][table][competitor]
+
+    return pd.DataFrame(champs)
+
+
 def build_points_df(competitor_list, competitor, race_count, races):
     # Builds a dataframe of points scored by every driver/constructor at every race in a
     # given season from DataFrames for each race.
@@ -103,3 +131,18 @@ def build_points_df(competitor_list, competitor, race_count, races):
 
     all_points_df.sort_values(by=['race'], inplace=True)
     return all_points_df
+
+
+def transpose_list(list):
+    np_array = np.array(list)
+    transpose = np_array.T
+    return transpose.tolist()
+
+
+def list_to_df(list, columns):
+    return pd.DataFrame(list, columns=columns)
+
+
+def df_column_to_int(df, column):
+    df[column] = pd.to_numeric(df[column])
+    return df

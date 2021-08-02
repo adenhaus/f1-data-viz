@@ -35,13 +35,13 @@ points_progression_section = st.beta_container()
 driver_points_progression_column, constructor_points_progression_column = st.beta_columns(2)
 standings_section = st.beta_container()
 driver_standings_column, constructor_standings_column = st.beta_columns(2)
+champs_ranking_section = st.beta_container()
 
 with header:
     st.title('Formula 1 Data Visualiser')
     st.markdown('An [open-source](https://github.com/adenhaus/f1-data-viz) project by [**Aden Haussmann**](https://www.linkedin.com/in/aden-haussmann/).')
     st.markdown('Explore detailed F1 data such as how driver and constructor points progressed over a given season, current and historical standings, career snapshots and more key stats.')
     st.markdown('*Control the input parameters of tables and visualizations below by using the tools with matching headings in the sidebar to the left.*')
-    st.markdown('---')
 
 with st.sidebar:
     st.markdown('# **Adjust Parameters**')
@@ -75,6 +75,7 @@ with st.sidebar:
 
 
 with points_progression_section:
+    st.markdown('---')
     st.markdown('## **Points Progression**')
     st.markdown('Compare any combination of drivers or constructors by selecting them in the sidebar on the left to see their points progression over the course of a given season, which you can also choose on the left.')
     st.markdown('***Hint:*** *Hover over a line on a chart to see more details.*')
@@ -125,9 +126,8 @@ with points_progression_section:
         except NameError:
             st.write('*No constructor standings data available for seasons before 1958.*')
 
-    st.markdown('---')
-
 with standings_section:
+    st.markdown('---')
     st.markdown('## **Standings**')
     st.markdown('Choose a year and a race from the sidebar on the left to view driver and constructors standings.')
     st.markdown('***Hint:*** *Hover over a table and scroll to see more.*')
@@ -145,6 +145,21 @@ with standings_section:
             st.dataframe(constructor_standings_df)
         except NameError:
             st.write('*No constructor standings data available for seasons before 1958.*')
+
+with champs_ranking_section:
+    st.markdown('---')
+    st.markdown('## **All-Time Rankings**')
+    st.markdown('Drivers and constructors ranked their total respective Championship victoroies.')
+
+    driver_champs_df = data_scraper.get_champ_winners('driver')
+    driver_champs_df = data_processor.df_column_to_int(driver_champs_df, 'number_wins')
+    driver_champs_fig = plotter.draw_viridis_bar_chart(driver_champs_df, 'driverID', 'number_wins', 'Driver', 'Championships Won', 'driverID')
+    st.plotly_chart(driver_champs_fig, use_container_width=True)
+
+    constructor_champs_df = data_scraper.get_champ_winners('constructor')
+    constructor_champs_df = data_processor.df_column_to_int(constructor_champs_df, 'number_wins')
+    constructor_champs_fig = plotter.draw_sunsetdark_bar_chart(constructor_champs_df, 'constructorID', 'number_wins', 'Constructor', 'Championships Won', 'constructorID')
+    st.plotly_chart(constructor_champs_fig, use_container_width=True)
 
 end = time.time()
 print("TOTAL TIME:")

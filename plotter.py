@@ -54,24 +54,24 @@ def draw_sunsetdark_line_chart(selected_points_df, x, y, color, hover_name, hove
 
 def draw_viridis_line_chart(selected_points_df, x, y, color, hover_name, hover_data, x_label, y_label, color_label):
     competitor_standings_fig = px.line(selected_points_df,
-            x=x,
-            y=y,
-            color=color,
-            hover_name=hover_name,
-            hover_data={
-                hover_data:False
-            },
-            labels={
-                x:x_label,
-                y:y_label,
-                color:color_label
-            },
-            color_discrete_sequence=px.colors.sequential.Viridis
-            # color_discrete_map={
-            #     "hamilton": "black",
-            #     "bottas":"blue",
-            #     "hhhh":"red"
-            # }
+        x=x,
+        y=y,
+        color=color,
+        hover_name=hover_name,
+        hover_data={
+            hover_data:False
+        },
+        labels={
+            x:x_label,
+            y:y_label,
+            color:color_label
+        },
+        color_discrete_sequence=px.colors.sequential.Viridis
+        # color_discrete_map={
+        #     "hamilton": "black",
+        #     "bottas":"blue",
+        #     "hhhh":"red"
+        # }
     )
 
     competitor_standings_fig.update_layout(
@@ -106,10 +106,10 @@ def draw_viridis_line_chart(selected_points_df, x, y, color, hover_name, hover_d
 
 def draw_sunsetdark_pie_chart(points_scoring_competitor, values, names):
     competitor_standings_pie = px.pie(points_scoring_competitor,
-                values=values,
-                names=names,
-                color_discrete_sequence=px.colors.sequential.Sunsetdark
-            )
+        values=values,
+        names=names,
+        color_discrete_sequence=px.colors.sequential.Sunsetdark
+    )
 
     competitor_standings_pie.update_layout(
         showlegend=False,
@@ -162,3 +162,68 @@ def turn_on_driver_legends(driver_standings_fig, driver_standings_pie):
         showlegend=True
     )
     return driver_standings_fig, driver_standings_pie
+
+
+def draw_viridis_bar_chart(df, x_col, y_col, x_label, y_label, colour):
+    fig = px.bar(data_frame=df,
+        x=x_col,
+        y=y_col,
+        labels={
+            x_col:x_label,
+            y_col:y_label
+            },
+        color=colour,
+        color_discrete_sequence=px.colors.sequential.Viridis
+        )
+
+    fig.update_layout(
+        xaxis = dict(
+            showgrid = False
+        ),
+        yaxis = dict(
+            gridcolor='Silver'
+        ),
+        margin=dict(
+            l=0,
+            r=0,
+            t=0,
+            b=0
+        ),
+        plot_bgcolor='rgba(0,0,0,0)',
+        showlegend=False
+    )
+
+    return fig
+
+
+def draw_sunsetdark_bar_chart(df, x_col, y_col, x_label, y_label, colour):
+    fig = px.bar(data_frame=df,
+        x=x_col,
+        y=y_col,
+        labels={
+            x_col:x_label,
+            y_col:y_label
+            },
+        color=colour,
+        color_discrete_sequence=px.colors.sequential.Sunsetdark
+        )
+
+    fig.update_layout(
+        xaxis = dict(
+            showgrid = False
+        ),
+        yaxis = dict(
+            gridcolor='Silver'
+        ),
+        margin=dict(
+            l=0,
+            r=0,
+            t=0,
+            b=0
+        ),
+        plot_bgcolor='rgba(0,0,0,0)',
+        showlegend=False
+    )
+
+    return fig
+    
