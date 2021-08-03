@@ -42,6 +42,7 @@ with header:
     st.markdown('An [open-source](https://github.com/adenhaus/f1-data-viz) project by [**Aden Haussmann**](https://www.linkedin.com/in/aden-haussmann/).')
     st.markdown('Explore detailed F1 data such as how driver and constructor points progressed over a given season, current and historical standings, career snapshots and more key stats.')
     st.markdown('*Control the input parameters of tables and visualizations below by using the tools with matching headings in the sidebar to the left.*')
+    st.markdown('***Hint:*** *Hover over lines, bars or other aspects of a chart to see more details.*')
 
 with st.sidebar:
     st.markdown('# **Adjust Parameters**')
@@ -78,7 +79,6 @@ with points_progression_section:
     st.markdown('---')
     st.markdown('## **Points Progression**')
     st.markdown('Compare any combination of drivers or constructors by selecting them in the sidebar on the left to see their points progression over the course of a given season, which you can also choose on the left.')
-    st.markdown('***Hint:*** *Hover over a line on a chart to see more details.*')
 
     with driver_points_progression_column:
         st.markdown('### **Drivers**')
@@ -130,7 +130,6 @@ with standings_section:
     st.markdown('---')
     st.markdown('## **Standings**')
     st.markdown('Choose a year and a race from the sidebar on the left to view driver and constructors standings.')
-    st.markdown('***Hint:*** *Hover over a table and scroll to see more.*')
 
     with driver_standings_column:
         st.markdown('### **Drivers Championship**')

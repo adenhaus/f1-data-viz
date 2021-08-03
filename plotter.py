@@ -46,7 +46,8 @@ def draw_sunsetdark_line_chart(selected_points_df, x, y, color, hover_name, hove
             t=0,
             b=0
         ),
-        plot_bgcolor='rgba(0,0,0,0)'
+        plot_bgcolor='rgba(0,0,0,0)',
+        dragmode=False
     )
 
     return competitor_standings_fig
@@ -98,7 +99,8 @@ def draw_viridis_line_chart(selected_points_df, x, y, color, hover_name, hover_d
             t=0,
             b=0
         ),
-        plot_bgcolor='rgba(0,0,0,0)'
+        plot_bgcolor='rgba(0,0,0,0)',
+        dragmode=False
     )
 
     return competitor_standings_fig
@@ -118,7 +120,8 @@ def draw_sunsetdark_pie_chart(points_scoring_competitor, values, names):
             r=0,
             t=0,
             b=0
-        )
+        ),
+        dragmode=False
     )
 
     return competitor_standings_pie
@@ -138,7 +141,8 @@ def draw_viridis_pie_chart(points_scoring_competitor, values, names):
             r=0,
             t=0,
             b=0
-        )
+        ),
+        dragmode=False
     )
 
     return competitor_standings_pie
@@ -190,7 +194,8 @@ def draw_viridis_bar_chart(df, x_col, y_col, x_label, y_label, colour):
             b=0
         ),
         plot_bgcolor='rgba(0,0,0,0)',
-        showlegend=False
+        showlegend=False,
+        dragmode=False
     )
 
     fig.update_traces(marker=dict( 
@@ -229,7 +234,8 @@ def draw_sunsetdark_bar_chart(df, x_col, y_col, x_label, y_label, colour):
             b=0
         ),
         plot_bgcolor='rgba(0,0,0,0)',
-        showlegend=False
+        showlegend=False,
+        dragmode=False
     )
 
     fig.update_traces(marker=dict( 
